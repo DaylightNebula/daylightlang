@@ -1,4 +1,4 @@
-use crate::enums::Statement;
+use crate::enums::{Statement, Operation, Value};
 
 
 /**
@@ -79,11 +79,29 @@ pub fn convert_parts_to_segments(
     let exp = *parts.first().unwrap();
     if exp == "" { println!("Cancelling on blank expression with parts: {:?}", parts); return None }
     Some(match exp {
-        "const" => Statement::Todo("Constant converion".to_string()),
-        "extern" => Statement::Todo("Extern converion".to_string()),
-        "fun" => Statement::Todo("Function expression converion".to_string()),
-        "let" | "var" => Statement::Todo("Create var expression converion".to_string()),
-        "}" => Statement::Todo("Handle closures!".to_string()),
-        _ => Statement::Todo(format!("What to do if no expression found! \"{}\"", exp))
+        // constant conversion
+        "const" => {
+            // make sure enough arguments
+            if parts.len() < 4 { return Some(Statement::FailedRead("Not enough arguments! Sample: const helloWorld = \"Hello World!\"".to_string())) }
+            
+            // get operation and make sure it is valid and set
+            let operation = Operation::from_str(parts[2]);
+            if operation.is_none() { return Some(Statement::FailedRead(format!("Failed to parse operation: {}", parts[2]))) }
+            let operation = operation.unwrap();
+            if !matches!(operation, Operation::Set) { return Some(Statement::FailedRead("Only set operation is allowed here!".into())); }
+
+            // get value and make sure it is valid
+            let value = Value::from_str(parts[3]);
+            if value.is_none() { return Some(Statement::FailedRead(format!("Failed to read value: {}", parts[3]))) }
+
+            // return constant statement
+            Statement::Constant(parts[1].into(), operation, value.unwrap())
+        },
+
+        "extern" => Statement::FailedRead("Extern converion".to_string()),
+        "fun" => Statement::FailedRead("Function expression converion".to_string()),
+        "let" | "var" => Statement::FailedRead("Create var expression converion".to_string()),
+        "}" => Statement::FailedRead("Handle closures!".to_string()),
+        _ => Statement::FailedRead(format!("What to do if no expression found! \"{}\"", exp))
     })
 }
