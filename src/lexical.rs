@@ -1,16 +1,13 @@
-use crate::enums::{Statement, Operation, Value};
+use crate::enums::{Statement, Operation, Value, Argument, Type};
 
 
 /**
- * Code could be split into a few different things
- * - Keywords (let, const, extern, fun, etc)
- * - Names (helloWorld for example)
- * - Operations (+, -, +=, etc)
- * - Type (i32, string, etc)
- * - Typed Objects (Strings, Floats, etc)
- * - Closure (the things {} surrounding code)
- * - Typed tuple (input arguments to a function)
- * - Untyped tuple (list of objects that are used to call a function)
+ * TODO:
+ * [ ] Closures
+ * [ ] () parsing
+ * [ ] Types
+ * [ ] Function Arguments
+ * [ ] Function Inputs
  */
 
 pub fn build_tree(input: &str) -> Vec<Statement> {
@@ -21,6 +18,7 @@ pub fn build_tree(input: &str) -> Vec<Statement> {
     let mut current_parts = Vec::<&str>::new();
     let mut cur_start_idx = 0;
     let mut string_freeze = false;
+    let mut par_freeze = false;
     for (c_idx, c) in input.chars().enumerate() {
         // if string freeze is active, handle
         if string_freeze {
@@ -31,13 +29,21 @@ pub fn build_tree(input: &str) -> Vec<Statement> {
         }
 
         // if a space is found, process content and set cur start index to c index + 1
-        if c == ' ' || c == '\n' {
-            // get part
-            let part = &input[cur_start_idx..c_idx];
-            cur_start_idx = c_idx + 1;
+        if c == ' ' || c == '\n' || c == '(' || c == ')' {
+            // detect disable par freeze
+            if c == ')' { par_freeze = false; }
 
-            // save part
-            if part != "" { current_parts.push(part); }
+            if !par_freeze {
+                // get part
+                let part = &input[cur_start_idx..c_idx];
+                cur_start_idx = c_idx + 1;
+
+                // save part
+                if part != "" { current_parts.push(part); }
+            }
+
+            // detect enable par freeze
+            if c == '(' { par_freeze = true; }
         }
 
         // if end line, process parts into final statement
@@ -98,7 +104,24 @@ pub fn convert_parts_to_segments(
             Statement::Constant(parts[1].into(), operation, value.unwrap())
         },
 
-        "extern" => Statement::FailedRead("Extern converion".to_string()),
+        "extern" => {
+            println!("Extern converion {:?}", parts);
+            // make sure enough arguments
+            if parts.len() != 5 && parts.len() != 3 { return Some(Statement::FailedRead("Not enough arguments! Sample: extern printf(text: string): i32".to_string())) }
+            
+            // process arguments
+            let arguments = Argument::from_str_multi(parts[2]);
+            if arguments.is_none() { return Some(Statement::FailedRead("Failed to parse arguments!".into())) }
+            let arguments = arguments.unwrap();
+
+            // process types
+            let subtype = if parts.len() == 5 {
+                Type::from_str(parts[4])
+            } else { None };
+
+            Statement::External(parts[1].into(), arguments, subtype)
+        },
+        
         "fun" => Statement::FailedRead("Function expression converion".to_string()),
         "let" | "var" => Statement::FailedRead("Create var expression converion".to_string()),
         "}" => Statement::FailedRead("Handle closures!".to_string()),
