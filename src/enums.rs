@@ -1,9 +1,9 @@
 #[derive(Debug)]
 pub enum Statement {
     Constant(String, Operation, Value), 
-    External(String, Vec<Argument>, Option<Type>), 
-    Function, 
-    CreateVar,
+    External(String, Vec<Argument>, Type), 
+    Function(String, Option<Vec<Argument>>, Type, Vec<Statement>), 
+    CallFunc(String, Option<Vec<String>>),
     FailedRead(String)
 }
 
@@ -24,6 +24,7 @@ pub enum Value {
 pub enum Type {
     String,
     I32,
+    Void
     // TODO implement rest
 }
 
@@ -68,15 +69,37 @@ impl Value {
             }
         }
     }
+
+    pub fn type_str(&self) -> String {
+        match self {
+            Value::String(value) => format!("[{} x i8]", value.len()),
+            Value::I32(value) => todo!(),
+        }
+    }
+
+    pub fn value_str(&self) -> String {
+        match self {
+            Value::String(value) => format!("c\"{}\"", value),
+            Value::I32(value) => todo!(),
+        }
+    }
 }
 
 impl Type {
     // convert from string
-    pub fn from_str(input: &str) -> Option<Self> {
+    pub fn from_str(input: &str) -> Self {
         match input {
-            "string" => Some(Type::String),
-            "i32" => Some(Type::I32),
-            _ => None
+            "string" => Type::String,
+            "i32" => Type::I32,
+            _ => Type::Void
+        }
+    }
+
+    pub fn to_str(&self) -> &str {
+        match self {
+            Type::String => todo!(),
+            Type::I32 => "i32",
+            Type::Void => "void"
         }
     }
 }
@@ -91,20 +114,28 @@ impl Argument {
 
         // get type
         let subtype = Type::from_str(*parts.last().unwrap());
-        let subtype = if subtype.is_some() { subtype.unwrap() } else { return None };
 
         // return final argument
         Some(Self { index, name: parts[0].into(), subtype })
     }
 
     pub fn from_str_multi(input: &str) -> Option<Vec<Argument>> {
+        // split into parts
         let parts = input.split(", ");
         let mut output = Vec::new();
+
+        // for each part and turn it into an argument
         for (index, part) in parts.into_iter().enumerate() {
             let arg = Self::from_str(index, part);
             if arg.is_some() { output.push(arg.unwrap()); }
             else { return None; }
         }
+
+        // return the final list of arguments
         return Some(output)
+    }
+
+    pub fn to_extern_func_args(&self) -> String {
+        format!("ptr nocapture")
     }
 }

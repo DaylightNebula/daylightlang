@@ -3,11 +3,13 @@ use crate::enums::{Statement, Operation, Value, Argument, Type};
 
 /**
  * TODO:
- * [ ] Closures
- * [ ] () parsing
- * [ ] Types
- * [ ] Function Arguments
+ * [x] Closures
+ * [x] () parsing
+ * [x] Types
+ * [x] Function Arguments
  * [ ] Function Inputs
+ * [ ] Expressions
+ * [ ] Make function calls more dependent on a known list of functions
  */
 
 pub fn build_tree(input: &str) -> Vec<Statement> {
@@ -18,6 +20,7 @@ pub fn build_tree(input: &str) -> Vec<Statement> {
     let mut current_parts = Vec::<&str>::new();
     let mut cur_start_idx = 0;
     let mut string_freeze = false;
+    let mut curl_freeze = false;
     let mut par_freeze = false;
     for (c_idx, c) in input.chars().enumerate() {
         // if string freeze is active, handle
@@ -29,11 +32,12 @@ pub fn build_tree(input: &str) -> Vec<Statement> {
         }
 
         // if a space is found, process content and set cur start index to c index + 1
-        if c == ' ' || c == '\n' || c == '(' || c == ')' {
+        if c == ' ' || c == '\n' || c == '(' || c == ')' || c == '{' || c == '}' {
             // detect disable par freeze
             if c == ')' { par_freeze = false; }
+            if c == '}' { curl_freeze = false; }
 
-            if !par_freeze {
+            if !par_freeze && !curl_freeze {
                 // get part
                 let part = &input[cur_start_idx..c_idx];
                 cur_start_idx = c_idx + 1;
@@ -44,10 +48,11 @@ pub fn build_tree(input: &str) -> Vec<Statement> {
 
             // detect enable par freeze
             if c == '(' { par_freeze = true; }
+            if c == '{' { curl_freeze = true; }
         }
 
         // if end line, process parts into final statement
-        if c == '\n' {
+        if c == '\n' && !curl_freeze {
             // remove pesky /r's from last element
             let last = current_parts.last();
             let last = if last.is_some() { last.unwrap() } else { &"" };
@@ -105,7 +110,6 @@ pub fn convert_parts_to_segments(
         },
 
         "extern" => {
-            println!("Extern converion {:?}", parts);
             // make sure enough arguments
             if parts.len() != 5 && parts.len() != 3 { return Some(Statement::FailedRead("Not enough arguments! Sample: extern printf(text: string): i32".to_string())) }
             
@@ -117,14 +121,48 @@ pub fn convert_parts_to_segments(
             // process types
             let subtype = if parts.len() == 5 {
                 Type::from_str(parts[4])
-            } else { None };
+            } else { Type::Void };
 
             Statement::External(parts[1].into(), arguments, subtype)
         },
         
-        "fun" => Statement::FailedRead("Function expression converion".to_string()),
+        "fun" => {
+            // make sure enough arguments
+            if parts.len() < 3 || parts.len() > 6 { 
+                return Some(Statement::FailedRead("Not enough arguments! Sample: fun test(hello: i32): bool {".to_string()))
+            }
+
+            // inputs
+            let has_args = parts.len() == 4 || parts.len() == 6;
+            let args = 
+                if has_args { Argument::from_str_multi(parts[2]) } 
+                else { None };
+
+            // if the function has a return type, grab it
+            let return_type_index = parts.len() - 3;
+            let has_return_type = parts[return_type_index] == ":";
+            let return_type = if has_return_type { Type::from_str(parts[return_type_index + 1]) } else { Type::Void };
+
+            // parse closure
+            let closure = build_tree(parts.last().unwrap());
+
+            Statement::Function(parts[1].into(), args, return_type, closure)
+        },
+
         "let" | "var" => Statement::FailedRead("Create var expression converion".to_string()),
-        "}" => Statement::FailedRead("Handle closures!".to_string()),
-        _ => Statement::FailedRead(format!("What to do if no expression found! \"{}\"", exp))
+        _ => {
+            // for now, assume this is a function call
+            if parts.len() < 1 { return Some(Statement::FailedRead("Failed to parse function call.  To few arguments".into())) }
+
+            // build inputs list if this has inputs
+            let has_inputs = parts.len() >= 2;
+            let inputs = 
+                if has_inputs {
+                    Some(parts[1..].to_vec().iter().map(|a| a.to_string()).collect::<Vec<String>>())
+                } else { None };
+
+            // add call function statement
+            Statement::CallFunc(parts.first().unwrap().to_string(), inputs)
+        }
     })
 }
