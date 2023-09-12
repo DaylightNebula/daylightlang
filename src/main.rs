@@ -1,6 +1,6 @@
 use std::{env, fs::DirEntry};
 
-pub mod lexical;
+pub mod tokenizer;
 
 fn main() {
     // if basic examples option enabled, run them
@@ -19,6 +19,8 @@ fn run_basic_examples() {
 }
 
 fn run_basic_example(entry: DirEntry) {
+    println!("Processing {} ...", entry.path().to_str().unwrap());
+
     // read file content
     let content = std::fs::read_to_string(
         format!(
@@ -27,5 +29,8 @@ fn run_basic_example(entry: DirEntry) {
             entry.file_name().to_str().unwrap()
         )
     ).unwrap();
+    let content = content.as_str();
     
+    // run lexical analysis on the content
+    tokenizer::breakup_text(content, false);
 }
