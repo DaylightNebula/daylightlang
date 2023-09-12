@@ -1,7 +1,7 @@
 const fstr: str = "%d"          // format string
 const init: i32 = 8             // initial value
 
-extern printf(str*, ...): i32   // external printf
+extern printf(text: str*, ...): i32   // external printf
 
 fun main() {                    // define main function
     let a = test(init)          // call test function with initial value

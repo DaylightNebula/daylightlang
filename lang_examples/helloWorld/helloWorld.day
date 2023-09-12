@@ -1,7 +1,0 @@
-const helloWorld = "Hello World!\n"
-
-extern printf(text: string): i32
-
-fun main() {
-    printf(helloWorld)
-}

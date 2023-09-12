@@ -1,18 +1,31 @@
+use std::{env, fs::DirEntry};
+
 pub mod lexical;
-pub mod enums;
-pub mod ll_compiler;
 
 fn main() {
-    // read input and compile it into statements
-    let input = std::fs::read_to_string("./test/helloWorld.day");
-    let tree = lexical::build_tree(input.unwrap().as_str());
+    // if basic examples option enabled, run them
+    if env::args().collect::<Vec<String>>().contains(&"basic-examples".to_string()) {
+        run_basic_examples();
+    }
+}
 
-    // generate result
-    let result = ll_compiler::compile(tree);
-    // println!("Compiled Result:");
-    // for string in result {
-    //     println!("{}", string);
-    // }
+fn run_basic_examples() {
+    // loop through all basic examples and run them
+    for path in std::fs::read_dir("./basic_examples").unwrap() {
+        if path.is_ok() {
+            run_basic_example(path.unwrap());
+        }
+    }
+}
 
-    std::fs::write("./test/compiled.ll", result.join("\n"));
+fn run_basic_example(entry: DirEntry) {
+    // read file content
+    let content = std::fs::read_to_string(
+        format!(
+            "{}/{}.day", 
+            entry.path().as_path().to_str().unwrap(), 
+            entry.file_name().to_str().unwrap()
+        )
+    ).unwrap();
+    
 }

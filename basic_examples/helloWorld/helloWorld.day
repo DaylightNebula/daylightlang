@@ -1,0 +1,7 @@
+const helloWorld: str = "Hello World!\n"
+
+extern printf(text: str*, ...): i32
+
+fun main() {
+    printf(helloWorld)
+}
