@@ -3,11 +3,11 @@ const init: i32 = 8             // initial value
 
 extern printf(str*, ...): i32   // external printf
 
-fun main() {
+fun main() {                    // define main function
     let a = test(init)          // call test function with initial value
     printf(fstr, a)             // call printf with format string and test value
 }
 
-fun test(a: i32): i32 {
+fun test(a: i32): i32 {         // define test function with a input value
     return a + 3                // return the input value + 3
 }
