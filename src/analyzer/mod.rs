@@ -32,7 +32,19 @@ impl Default for LLVMValue {
 impl LLVMValue {
     pub fn from_string_and_value(input_type: String, input: String) -> Option<Self> {
         match input_type.as_str() {
-            "str" => Some(LLVMValue::Str(input.clone(), input.len())),
+            "str" => {
+                // get chars iterator
+                let mut chars = input.chars();
+
+                // make sure input does not start and end with a "
+                let mut input = input.clone();
+                if chars.next().unwrap() == '\"' && chars.last().unwrap() == '\"' {
+                    input = input[1..input.len() - 1].to_string();
+                }
+
+                // return final string
+                Some(LLVMValue::Str(input.clone(), input.len()))
+            },
             "i8" => {
                 let value = input.parse::<i8>();
                 if value.is_ok() { Some(LLVMValue::I8(value.unwrap())) } else { None }
@@ -46,6 +58,24 @@ impl LLVMValue {
                 if value.is_ok() { Some(LLVMValue::I32(value.unwrap())) } else { None }
             },
             _ => None
+        }
+    }
+
+    pub fn to_llvm_type_str(&self) -> String {
+        match self {
+            LLVMValue::I8(_) => "i8".to_string(),
+            LLVMValue::I16(_) => "i16".to_string(),
+            LLVMValue::I32(_) => "i32".to_string(),
+            LLVMValue::Str(_, len) => format!("[{} x i8]", len)
+        }
+    }
+
+    pub fn to_llvm_value(&self) -> String {
+        match self {
+            LLVMValue::I8(a) => a.to_string(),
+            LLVMValue::I16(a) => a.to_string(),
+            LLVMValue::I32(a) => a.to_string(),
+            LLVMValue::Str(a, _) => format!("c\"{}\"", a),
         }
     }
 }

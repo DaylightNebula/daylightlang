@@ -1,6 +1,7 @@
 use std::{env, fs::DirEntry};
 
 pub mod analyzer;
+pub mod ir_compiler;
 pub mod tokenizer;
 
 fn main() {
@@ -36,4 +37,7 @@ fn run_basic_example(entry: DirEntry) {
     let lines = tokenizer::breakup_text(content, false);
     let analysis = analyzer::analyze_root(lines);
     println!("Final analysis: {:?}", analysis);
+    let compiled = ir_compiler::compile_analysis(analysis);
+    println!("Final code:");
+    for line in compiled { println!("{}", line); }
 }

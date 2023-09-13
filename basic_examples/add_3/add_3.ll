@@ -1,5 +1,5 @@
 @.fstr = private constant [2 x i8] c"%d"            ; format string
-@.init = private unnamed_addr constant i32 8        ; initial value
+@.init = private constant i32 8        ; initial value
 
 declare i32 @printf(i8*, ...)                       ; external printf
 
