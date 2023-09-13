@@ -1,5 +1,12 @@
 use self::structs::*;
 
+/***************
+ * 
+ * This module turns input text into a list of text lines in a format that is
+ * easier for the analyzer to work with.
+ * 
+ ***************/
+
 pub mod structs;
 
 pub fn breakup_text(content: &str, debug: bool) -> Vec<TextLine> {

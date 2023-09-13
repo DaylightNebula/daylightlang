@@ -1,5 +1,6 @@
 use std::{env, fs::DirEntry};
 
+pub mod analyzer;
 pub mod tokenizer;
 
 fn main() {
@@ -32,5 +33,7 @@ fn run_basic_example(entry: DirEntry) {
     let content = content.as_str();
     
     // run lexical analysis on the content
-    tokenizer::breakup_text(content, false);
+    let lines = tokenizer::breakup_text(content, false);
+    let analysis = analyzer::analyze_root(lines);
+    println!("Final analysis: {:?}", analysis);
 }
