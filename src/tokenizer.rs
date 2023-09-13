@@ -1,19 +1,6 @@
-#[derive(Debug, Clone)]
-pub struct TextLine {
-    pub symbols: Vec<TextSymbol>
-}
+use self::structs::*;
 
-#[derive(Debug, Clone)]
-pub enum TextSymbol {
-    Statement(String),
-    Type(String),
-    ArrayDeclaration(i32),
-    UnTypedTuple(Vec<String>),
-    TypedTuple(Vec<(String, String)>),
-    Generics(Vec<(String, String)>),
-    Closure(Vec<TextLine>),
-    Comment(String)
-}
+pub mod structs;
 
 pub fn breakup_text(content: &str, debug: bool) -> Vec<TextLine> {
     let mut output = Vec::new();
@@ -158,9 +145,17 @@ pub fn breakup_text(content: &str, debug: bool) -> Vec<TextLine> {
                     segment = &segment[..segment.len() - 1];
                 }
 
-                // process and save segment
                 cur_seg_start = counter + 1;
-                symbols.push(TextSymbol::Statement(segment.to_string()));
+
+                // attempt to convert to operation
+                let operation = Operation::from_str(segment);
+
+                // process and save segment
+                if operation.is_some() {
+                    symbols.push(TextSymbol::Operation(operation.unwrap()));
+                } else {
+                    symbols.push(TextSymbol::Statement(segment.to_string()));
+                }
             }
         }
 
