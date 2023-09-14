@@ -34,7 +34,7 @@ fn run_basic_example(entry: DirEntry) {
     let content = content.as_str();
     
     // run lexical analysis on the content
-    let lines = tokenizer::breakup_text(content, false);
+    let lines = tokenizer::breakup_text(content, true);
     let analysis = analyzer::analyze_root(lines);
     println!("Final analysis: {:?}", analysis);
     let compiled = ir_compiler::compile_analysis(analysis);

@@ -166,6 +166,16 @@ pub fn breakup_text(content: &str, debug: bool) -> Vec<TextLine> {
             }
         }
 
+        // if this char is a ", handle string creation
+        if c == '\"' {
+            let to_add = depth_aware_search(content, counter + 1, '\"', None) + 2;
+            
+            // counters and skip
+            counter += to_add;
+            // cur_seg_start = counter;
+            continue;
+        }
+
         // check if an endline was reached (;, or \n) or last character
         if c == ';' || c == '\n' {
             // filter symbols (mostly for empty symbols that make above functions easier)
@@ -207,6 +217,11 @@ pub fn depth_aware_search(
         // mod depth
         if char == looking_for { depth -= 1; }
         else if Some(char) == lvl_deeper { depth += 1; }
+
+        // special case for when looking for spaces
+        if looking_for == ' ' && (char == '\n' || char == '\r') {
+            depth -= 1;
+        }
 
         // add to counter
         to_add += 1;
