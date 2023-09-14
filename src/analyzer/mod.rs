@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::tokenizer::structs::*;
 
-use self::constants::LLVMConstant;
+use self::{constants::LLVMConstant, arguments::LLVMArgument, types::*};
 
 /********
  * 
@@ -11,11 +11,14 @@ use self::constants::LLVMConstant;
  * 
  ********/
 
+pub mod arguments;
 pub mod constants;
+pub mod types;
 
 #[derive(Default, Debug, Clone)]
 pub struct Analysis {
-    pub constants: HashMap<String, LLVMConstant>
+    pub constants: HashMap<String, LLVMConstant>,
+    pub externs: Vec<(String, Vec<LLVMArgument>, LLVMTypeWrapper)>
 }
 
 pub fn analyze_root(lines: Vec<TextLine>) -> Analysis {
@@ -51,6 +54,24 @@ pub fn analyze_root(lines: Vec<TextLine>) -> Analysis {
                 if value.is_some() {
                     output.constants.insert(name.clone(), value.unwrap());
                 } else { println!("Constant value did not parse!") }
+            },
+            "extern" => {
+                // todo check argument length
+
+                // unpack
+                let name = match symbols_iter.next().unwrap() { TextSymbol::Statement(a) => a, _ => panic!("Const 2nd not a statement!") };
+                
+                // load arguments
+                let arguments = match symbols_iter.next().unwrap() { TextSymbol::TypedTuple(a) => a, _ => panic!("Const 3rd not a typed tuple!") };
+                let arguments = LLVMArgument::from_tuple_list(arguments.clone());
+
+                // load return type
+                let ret_type = match symbols_iter.next().unwrap() { TextSymbol::Type(a) => a, _ => panic!("Const 4th not a statement!") };
+                let ret_type = LLVMTypeWrapper::from_str(ret_type.clone());
+                let ret_type = if ret_type.is_some() { ret_type.unwrap() } else { panic!("Invalid return type: {:?}", ret_type); };
+
+                // add extern
+                output.externs.push((name.clone(), arguments, ret_type));
             },
             _ => println!("Unknown operation {}", statement)
         }
