@@ -7,6 +7,7 @@ use self::structs::*;
  * 
  ***************/
 
+pub mod debug;
 pub mod structs;
 
 pub fn breakup_text(content: &str, debug: bool) -> Vec<TextLine> {

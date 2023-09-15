@@ -52,4 +52,22 @@ impl Operation {
             _ => None
         }
     }
+
+    pub fn to_str(&self) -> &str {
+        match self {
+            Operation::Add => "+",
+            Operation::AddEquals => "+=",
+            Operation::Subtract => "-",
+            Operation::SubtractEquals => "-=",
+            Operation::Multiply => "*",
+            Operation::MultiplyEquals => "*=",
+            Operation::Divide => "/",
+            Operation::DivideEquals => "/=",
+            Operation::Set => "=",
+            Operation::Equals => "==",
+            Operation::NotEquals => "!=",
+            Operation::And => "&&",
+            Operation::Or => "||",
+        }
+    }
 }

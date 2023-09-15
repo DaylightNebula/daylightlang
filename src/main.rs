@@ -22,22 +22,29 @@ fn run_basic_examples() {
 
 fn run_basic_example(entry: DirEntry) {
     println!("Processing {} ...", entry.path().to_str().unwrap());
+    let formatted_path = format!(
+        "{}/{}", 
+        entry.path().as_path().to_str().unwrap(), 
+        entry.file_name().to_str().unwrap()
+    );
 
     // read file content
     let content = std::fs::read_to_string(
-        format!(
-            "{}/{}.day", 
-            entry.path().as_path().to_str().unwrap(), 
-            entry.file_name().to_str().unwrap()
-        )
+        format!("{}.day", formatted_path)
     ).unwrap();
     let content = content.as_str();
     
-    // run lexical analysis on the content
-    let lines = tokenizer::breakup_text(content, true);
+    // run tokenize step
+    let lines = tokenizer::breakup_text(content, false);
+    let lines_str = tokenizer::debug::convert_lines_to_string(&lines, 0);
+    let _ = std::fs::write(format!("{}.tokens.txt", formatted_path), lines_str);
+
+    // run analysis
     let analysis = analyzer::analyze_root(lines);
     println!("Final analysis: {:?}", analysis);
-    let compiled = ir_compiler::compile_analysis(analysis);
-    println!("Final code:");
-    for line in compiled { println!("{}", line); }
+
+    // do final compile
+    let compiled = ir_compiler::compile_analysis(analysis).join("\n");
+    println!("Final code: \n{}", compiled);
+    let _ = std::fs::write(format!("{}.ll", formatted_path), compiled);
 }
