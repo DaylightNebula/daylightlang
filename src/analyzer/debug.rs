@@ -1,4 +1,4 @@
-use super::Analysis;
+use super::{Analysis, arguments::LLVMArgument};
 
 pub fn convert_analysis_to_string(analysis: &Analysis) -> String {
     let mut output: Vec<String> = Vec::new();
@@ -9,9 +9,8 @@ pub fn convert_analysis_to_string(analysis: &Analysis) -> String {
     }
 
     output.push("\nEXTERNS: ".to_string());
-    for (e_name, _e, _t) in &analysis.externs {
-        output.push(format!("{}", e_name));
-        // output.push(format!("{}({}): {}", e_name, )); // todo finish
+    for (e_name, e, t) in &analysis.externs {
+        output.push(format!("{}({}): {}", e_name, LLVMArgument::list_to_llvm(&e), t.to_str()));
     }
 
     output.join("\n")

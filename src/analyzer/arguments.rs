@@ -26,4 +26,8 @@ impl LLVMArgument {
 
         return output;
     }
+
+    pub fn list_to_llvm(list: &Vec<LLVMArgument>) -> String {
+        list.iter().map(|a| a.type_wrapper.to_str()).collect::<Vec<String>>().join(", ")
+    }
 }
