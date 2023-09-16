@@ -13,5 +13,15 @@ pub fn convert_analysis_to_string(analysis: &Analysis) -> String {
         output.push(format!("{}({}): {}", e_name, LLVMArgument::list_to_llvm(&e), t.to_str()));
     }
 
+    output.push("\nFUNCTIONS: ".to_string());
+    for context in &analysis.functions {
+        output.push(format!(
+            "fun {}({}): {} {{}}", 
+            context.name, 
+            context.input_args.iter().map(|a| format!("{}: {}", a.name, a.type_wrapper.to_str())).collect::<Vec<String>>().join(", "), 
+            context.ret_type.to_str()
+        ));
+    }
+
     output.join("\n")
 }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::tokenizer::structs::*;
 
-use self::{constants::LLVMConstant, arguments::LLVMArgument, types::*};
+use self::{constants::LLVMConstant, arguments::LLVMArgument, types::*, functions::FunctionContext};
 
 /********
  * 
@@ -14,12 +14,14 @@ use self::{constants::LLVMConstant, arguments::LLVMArgument, types::*};
 pub mod arguments;
 pub mod constants;
 pub mod debug;
+pub mod functions;
 pub mod types;
 
 #[derive(Default, Debug, Clone)]
 pub struct Analysis {
     pub constants: HashMap<String, LLVMConstant>,
-    pub externs: Vec<(String, Vec<LLVMArgument>, LLVMTypeWrapper)>
+    pub externs: Vec<(String, Vec<LLVMArgument>, LLVMTypeWrapper)>,
+    pub functions: Vec<FunctionContext>
 }
 
 pub fn analyze_root(lines: Vec<TextLine>) -> Analysis {
@@ -73,6 +75,55 @@ pub fn analyze_root(lines: Vec<TextLine>) -> Analysis {
 
                 // add extern
                 output.externs.push((name.clone(), arguments, ret_type));
+            },
+            "fun" => {
+                // todo check arguments
+
+                // unpack
+                let name = match symbols_iter.next().unwrap() { TextSymbol::Statement(a) => a, _ => panic!("Function 2nd not a statement!") };
+                let mut args: Vec<(String, String)> = Vec::new();
+                let mut ret_type = LLVMTypeWrapper { inner: LLVMType::Void, is_pointer: false };
+                let mut closure: Option<Vec<TextLine>> = None;
+
+                // unpack 3rd
+                match symbols_iter.next().unwrap() {
+                    TextSymbol::TypedTuple(a) => args = a.clone(),
+                    TextSymbol::Closure(a) => closure = Some(a.clone()),
+                    TextSymbol::Type(a) => ret_type = LLVMTypeWrapper::from_str(a.clone()).unwrap(),
+                    _ => panic!("Function 3rd is not a closure, type, or arguments!")
+                }
+
+                // unpack 4th if necessary
+                if closure.is_none() || matches!(ret_type.inner, LLVMType::Void) {
+                    if let Some(next) = symbols_iter.next() {
+                        match next {
+                            TextSymbol::Closure(a) => closure = Some(a.clone()),
+                            TextSymbol::Type(a) => ret_type = LLVMTypeWrapper::from_str(a.clone()).unwrap(),
+                            _ => panic!("Function 4th is not a closure or a type!")
+                        }
+                    }
+                }
+
+                // unpack 5th if necessary
+                if closure.is_none() {
+                    if let Some(next) = symbols_iter.next() {
+                        match next {
+                            TextSymbol::Closure(a) => closure = Some(a.clone()),
+                            _ => panic!("Function 5th is not a closure!")
+                        }
+                    }
+                }
+
+                // make sure closure is set
+                let _closure = if closure.is_some() { closure.unwrap() } else { panic!("No closure given to function!") };
+
+                // create new function context
+                let context = FunctionContext::new(name.clone(), LLVMArgument::from_tuple_list(args), ret_type);
+            
+                // todo process
+
+                // save context
+                output.functions.push(context);
             },
             _ => println!("Unknown operation {}", statement)
         }
