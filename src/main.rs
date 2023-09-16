@@ -41,6 +41,8 @@ fn run_basic_example(entry: DirEntry) {
 
     // run analysis
     let analysis = analyzer::analyze_root(lines);
+    let analysis_str = analyzer::debug::convert_analysis_to_string(&analysis);
+    let _ = std::fs::write(format!("{}.analysis.txt", formatted_path), analysis_str);
     println!("Final analysis: {:?}", analysis);
 
     // do final compile

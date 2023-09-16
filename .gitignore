@@ -2,3 +2,5 @@
 *.exe
 compiled.ll
 *.tokens.txt
+*.analysis.txt
+*.ll

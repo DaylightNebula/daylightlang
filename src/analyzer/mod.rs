@@ -13,6 +13,7 @@ use self::{constants::LLVMConstant, arguments::LLVMArgument, types::*};
 
 pub mod arguments;
 pub mod constants;
+pub mod debug;
 pub mod types;
 
 #[derive(Default, Debug, Clone)]
